@@ -8,24 +8,31 @@ export default function Home() {
   const [room, setRoom] = React.useState<string>("");
   const [joined, setJoined] = React.useState<boolean>(false);
   const [userName, setUserName] = React.useState<string>("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const handleChatMessage = (message: string) => {
-    const data = {room, message, sender: userName};
+    const data = { room, message, sender: userName };
     setMessages((prevMessages) => [...prevMessages, { sender: userName, message }]);
     socket.emit("message", data);
   };
 
   const handleJoinRoom = () => {
-    if(room && userName) {
-      console.log(room, userName, "joined");
+    if (room && userName) {
       socket.emit("join-room", { room, username: userName });
       setJoined(true);
-
     }
   };
 
+  const playNotificationSound = () => {
+    const audio = new Audio("/notif-wa.mp3");
+    audio.play().catch((error) => {
+      console.error("Error playing notification sound:", error);
+    });
+  }
+
   React.useEffect(() => {
     socket.on("message", (data) => {
+      playNotificationSound();
       setMessages((prevMessages) => [...prevMessages, data]);
     });
     socket.on("user-joined", (message: string) => {
@@ -37,6 +44,15 @@ export default function Home() {
       socket.off("message");
     };
   }, []);
+
+  React.useEffect(() => {
+    // Scroll every time messages change
+    const container = containerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages]);
+
   return (
     <div className="flex mt-24 justify-center w-full">
       {!joined ? (
@@ -64,7 +80,10 @@ export default function Home() {
       ) : (
         <div className="w-full max-w-3xl mx-auto">
           <h1 className="mb-4 text-2xl font-bold">Room: {room}</h1>
-          <div className="h-[500px] overflow-y-auto border-2 border-gray-200 rounded-lg p-4 mb-4 bg-gray-200">
+          <div
+            className="h-[500px] overflow-y-auto border-2 border-gray-200 rounded-lg p-4 mb-4 bg-gray-200"
+            ref={containerRef}
+          >
             {messages.map((msg, index) => (
               <ChatMessage
                 key={index}
