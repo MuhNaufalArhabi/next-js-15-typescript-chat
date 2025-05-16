@@ -27,9 +27,10 @@ export default function Home() {
     if (room && username) {
       socket.emit("join-room", { room, username: username });
       firebaseDB.saveJoinRoom(room, idUser || "", username);
-      firebaseDB.getMessageByRoom(room, (message) => {
+      const unsubscribe = firebaseDB.getMessageByRoom(room, (message) => {
         setMessages(message);
       });
+      unsubscribe();
       setJoined(true);
     }
   };
@@ -85,7 +86,6 @@ export default function Home() {
     }
   }, [messages]);
 
-  console.log(messages)
   return (
     <div className="flex mt-24 justify-center w-full">
       <div className="flex gap-8 flex-start w-full">
