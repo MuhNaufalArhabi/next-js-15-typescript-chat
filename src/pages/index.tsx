@@ -14,6 +14,7 @@ export default function Home() {
   const firebaseDB = useDatabase();
   const [idUser, setIdUser] = React.useState<string>("");
   const [ownRoom, setOwnRoom] = React.useState<{ room: string; username: string; id: string }[]>([]);
+  const [getHistoryMesageByRoom, setGetHistoryMessageByRoom] = React.useState<boolean>(false);
   // const [allRooms, setAllRooms] = React.useState<{ room: string }[]>([]);
 
   const handleChatMessage = (message: string) => {
@@ -23,10 +24,10 @@ export default function Home() {
     firebaseDB.saveUserMessage(message, room, userName, idUser || "");
   };
 
-  const handleJoinRoom = () => {
-    if (room && userName) {
-      socket.emit("join-room", { room, username: userName });
-      firebaseDB.saveJoinRoom(room, idUser || "", userName);
+  const handleJoinRoom = (room: string, username: string) => {
+    if (room && username) {
+      socket.emit("join-room", { room, username: username });
+      firebaseDB.saveJoinRoom(room, idUser || "", username);
       setJoined(true);
     }
   };
@@ -83,16 +84,17 @@ export default function Home() {
   }, [messages]);
 
   React.useEffect(() => {
-    if (!room) return;
+    if (!room && getHistoryMesageByRoom) return;
 
     const unsubscribe = firebaseDB.getMessageByRoom(room, (message) => {
       setMessages(message);
     });
+    setGetHistoryMessageByRoom(true);
 
     return () => {
       unsubscribe(); // Clean up the listener when component unmounts or room changes
     };
-  }, [room]);
+  }, [room, getHistoryMesageByRoom]);
 
   return (
     <div className="flex mt-24 justify-center w-full">
@@ -107,6 +109,7 @@ export default function Home() {
                 setJoined(true);
                 setRoom(roomData.room);
                 setUserName(roomData.username);
+                handleJoinRoom(roomData.room, roomData.username);
               }}
             >
               {roomData.room}
@@ -138,7 +141,7 @@ export default function Home() {
             />
             <button
               className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none"
-              onClick={handleJoinRoom}
+              onClick={() => handleJoinRoom(room, userName)}
             >
               Join Room
             </button>

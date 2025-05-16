@@ -48,15 +48,25 @@ export default function useDatabase() {
   };
 
   const saveJoinRoom = (room: string, id: string, username: string) => {
-    const roomRef = ref(database, `rooms/${room}`);
-    const newRoomRef = push(roomRef);
-    set(newRoomRef, {
-      room,
-      username,
-      id,
-    }).catch((error) => {
-      console.error("Error saving join room message:", error);
+    let joinedRoom: boolean = false;
+    getRoomById(id, (room) => {
+      if (room.length > 0) {
+        joinedRoom = true;
+        return;
+      }
+      joinedRoom = false;
     });
+    if (!joinedRoom) {
+      const roomRef = ref(database, `rooms/${room}`);
+      const newRoomRef = push(roomRef);
+      set(newRoomRef, {
+        room,
+        username,
+        id,
+      }).catch((error) => {
+        console.error("Error saving join room message:", error);
+      });
+    }
   };
 
   const getRoomById = (id: string, cb: (room: { room: string; username: string; id: string }[]) => void) => {
