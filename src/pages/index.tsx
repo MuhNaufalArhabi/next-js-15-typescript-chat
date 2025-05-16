@@ -96,6 +96,8 @@ export default function Home() {
     };
   }, [room, getHistoryMesageByRoom]);
 
+  console.log(messages)
+
   return (
     <div className="flex mt-24 justify-center w-full">
       <div className="flex gap-8 flex-start w-full">
@@ -168,7 +170,7 @@ export default function Home() {
               ref={containerRef}
             >
               {messages.map((msg, index) => (
-                <ChatMessage key={index} isOwnMessage={msg.id === idUser} sender={msg.sender} message={msg.message} />
+                <ChatMessage key={index + msg.id} isOwnMessage={msg.id === idUser} sender={msg.sender} message={msg.message} />
               ))}
             </div>
             <ChatForm onSendMessage={handleChatMessage} />
