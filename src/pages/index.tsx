@@ -27,10 +27,6 @@ export default function Home() {
     if (room && username) {
       socket.emit("join-room", { room, username: username });
       firebaseDB.saveJoinRoom(room, idUser || "", username);
-      const unsubscribe = firebaseDB.getMessageByRoom(room, (message) => {
-        setMessages(message);
-      });
-      unsubscribe();
       setJoined(true);
     }
   };
@@ -85,6 +81,16 @@ export default function Home() {
       container.scrollTop = container.scrollHeight;
     }
   }, [messages]);
+
+  React.useEffect(() => {
+    const unsubscribe = firebaseDB.getMessageByRoom(room, (message) => {
+      setMessages(message);
+    });
+    setTimeout(() => {
+
+      unsubscribe();
+    }, 5000)
+  }, [room]);
 
   return (
     <div className="flex mt-24 justify-center w-full">
