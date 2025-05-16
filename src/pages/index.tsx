@@ -14,7 +14,6 @@ export default function Home() {
   const firebaseDB = useDatabase();
   const [idUser, setIdUser] = React.useState<string>("");
   const [ownRoom, setOwnRoom] = React.useState<{ room: string; username: string; id: string }[]>([]);
-  const [getHistoryMesageByRoom, setGetHistoryMessageByRoom] = React.useState<boolean>(false);
   // const [allRooms, setAllRooms] = React.useState<{ room: string }[]>([]);
 
   const handleChatMessage = (message: string) => {
@@ -28,6 +27,9 @@ export default function Home() {
     if (room && username) {
       socket.emit("join-room", { room, username: username });
       firebaseDB.saveJoinRoom(room, idUser || "", username);
+      firebaseDB.getMessageByRoom(room, (message) => {
+        setMessages(message);
+      });
       setJoined(true);
     }
   };
@@ -83,21 +85,7 @@ export default function Home() {
     }
   }, [messages]);
 
-  React.useEffect(() => {
-    if (!room && getHistoryMesageByRoom) return;
-
-    const unsubscribe = firebaseDB.getMessageByRoom(room, (message) => {
-      setMessages(message);
-    });
-    setGetHistoryMessageByRoom(true);
-
-    return () => {
-      unsubscribe(); // Clean up the listener when component unmounts or room changes
-    };
-  }, [room, getHistoryMesageByRoom]);
-
   console.log(messages)
-
   return (
     <div className="flex mt-24 justify-center w-full">
       <div className="flex gap-8 flex-start w-full">
@@ -170,7 +158,12 @@ export default function Home() {
               ref={containerRef}
             >
               {messages.map((msg, index) => (
-                <ChatMessage key={index + msg.id} isOwnMessage={msg.id === idUser} sender={msg.sender} message={msg.message} />
+                <ChatMessage
+                  key={index + msg.id}
+                  isOwnMessage={msg.id === idUser}
+                  sender={msg.sender}
+                  message={msg.message}
+                />
               ))}
             </div>
             <ChatForm onSendMessage={handleChatMessage} />
