@@ -1,8 +1,11 @@
-import { ref, onValue, set, push } from "firebase/database";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ref, onValue, set, push, get } from "firebase/database";
+// import { getDoc, addDoc, collection } from "firebase/firestore";
 import { database } from "../lib/firebase-database";
-import { v4 as uuidv4 } from "uuid";
+// import { v4 as uuidv4 } from "uuid";
 
 export default function useDatabase() {
+  
   const getMessageByRoom = (room: string, cb: (message: { sender: string; message: string; id: string }[]) => void) => {
     const messageRef = ref(database, `messages/${room}`);
 
@@ -30,22 +33,22 @@ export default function useDatabase() {
     });
   };
 
-  const saveIdByVisit = () => {
-    let deviceId = localStorage.getItem("device_id");
-    if (!deviceId) {
-      deviceId = uuidv4();
-      localStorage.setItem("device_id", deviceId);
-    }
-  };
+  // const saveIdByVisit = () => {
+  //   let deviceId = localStorage.getItem("device_id");
+  //   if (!deviceId) {
+  //     deviceId = uuidv4();
+  //     localStorage.setItem("device_id", deviceId);
+  //   }
+  // };
 
-  const getIDbyVisit = () => {
-    const deviceId = localStorage.getItem("device_id");
-    if (deviceId) {
-      return deviceId;
-    } else {
-      return null;
-    }
-  };
+  // const getIDbyVisit = () => {
+  //   const deviceId = localStorage.getItem("device_id");
+  //   if (deviceId) {
+  //     return deviceId;
+  //   } else {
+  //     return null;
+  //   }
+  // };
 
   const saveJoinRoom = (room: string, id: string, username: string) => {
     let joinedRoom: boolean = false;
@@ -120,13 +123,47 @@ export default function useDatabase() {
     return unsubscribe;
   };
 
+  const signInGoogle = async (email: string | null, username: string | null, id: string | null) => {
+    if (!email) {
+      console.error("Email is required");
+      return;
+    }
+
+    try {
+      const snapshot = await get(ref(database, "users"));
+
+      const users = snapshot.val() || {};
+
+      // Check if email already exists
+      const emailExists = Object.values(users).some((user: any) => user.email === email);
+
+      if (emailExists) {
+        console.log("User already exists with this email");
+        return;
+      }
+
+      const userRef = ref(database, `users/${id}`);
+
+      await set(userRef, {
+        id,
+        email,
+        username,
+      });
+
+      console.log("User signed in successfully");
+    } catch (error) {
+      console.error("Error during sign-in:", error);
+    }
+  };
+
   return {
     getMessageByRoom,
     saveUserMessage,
-    saveIdByVisit,
-    getIDbyVisit,
+    // saveIdByVisit,
+    // getIDbyVisit,
     saveJoinRoom,
     getRoomById,
     getAllRooms,
+    signInGoogle,
   };
 }
